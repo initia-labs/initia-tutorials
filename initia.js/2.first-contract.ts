@@ -4,18 +4,21 @@ import {
     wallet,
     key
 } from './config';
-import * as os from "os";
 import * as fs from "fs";
+import { MoveBuilder } from '@initia/builder.js';
+import path from 'path';
 
-
-async function main() {
+async function deployContract() {
     const myAddr = key.accAddress;
 
-    // Read the module from the file system using the file path
-    const module = fs.readFileSync(__dirname + "/../move/basic-coin/build/basic_coin/bytecode_modules/basic_coin.mv").toString('base64');
+    // Compile contract and read the compiled module bytes
+    const builder = new MoveBuilder(path.resolve(__dirname, "../move/basic-coin"), {});
+    await builder.build();
+    const compiledModuleBytes = await builder.get("basic_coin");
+    const base64EncodedModuleBytes = compiledModuleBytes.toString('base64');
 
     // Create a new message to publish the module
-    const publishMsg = new MsgPublish(myAddr, [module], 1);
+    const publishMsg = new MsgPublish(myAddr, [base64EncodedModuleBytes], 1);
 
     const signedTx = await wallet.createAndSignTx({ msgs: [publishMsg] });
     const broadcastResult = await lcd.tx.broadcast(signedTx);
@@ -37,4 +40,4 @@ async function main() {
     }, 1000);
 }
   
-main()
+deployContract()

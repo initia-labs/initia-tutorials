@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@initia/builder.js": "^0.0.3",
     "@initia/initia.js": "^0.0.50",
     "bluebird": "^3.7.2"
   },
