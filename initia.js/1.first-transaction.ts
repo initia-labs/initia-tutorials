@@ -1,16 +1,16 @@
-import { LCDClient, Wallet, MnemonicKey, MsgSend } from '@initia/initia.js';
+import { MnemonicKey, MsgSend } from '@initia/initia.js';
 import { 
     lcd,
     wallet,
     key
 } from './config';
 
+const myAddr = key.accAddress;
+
 async function transferToken(){
     // Generate a new key for the recipient
     const recipientKey = new MnemonicKey();
-
     const recipientAddr = recipientKey.accAddress;
-    const myAddr = key.accAddress;
 
     // Get the balance of the recipient and sender addresses
     let recipientBalance = await lcd.bank.balance(recipientAddr);

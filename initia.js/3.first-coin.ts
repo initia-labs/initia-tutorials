@@ -5,10 +5,11 @@ import {
     key
 } from './config';
 
+const myAddr = key.accAddress;
+const bcs = BCS.getInstance();
+
 async function registerCoin() {
     try{
-        const myAddr = key.accAddress;
-
         // Create a message to execute the "register" function on the "coin" module
         const executeMsg = new MsgExecute(
             myAddr, // sender
@@ -44,9 +45,6 @@ async function registerCoin() {
 }
 
 async function mintCoin(){
-    const myAddr = key.accAddress;
-    const bcs = BCS.getInstance();
-  
     // Create an execute msg
     // Execute the 'mint_to' function of the 'basic_coin' module
     const executeMsg = new MsgExecute(

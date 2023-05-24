@@ -1,7 +1,7 @@
 import { LCDClient, Wallet, MnemonicKey } from '@initia/initia.js';
 
 // TODO: Set your node url and chain id
-export const NODE_URL = 'https://next-stone-rest.initia.tech/';
+export const NODE_URL = 'https://stone-rest.initia.tech/';
 export const CHAIN_ID = 'stone-8';
 
 // TODO: Set your mnemonic
@@ -22,6 +22,8 @@ export const lcd = new LCDClient(
 
 // Create a new MnemonicKey object with your mnemonic phrase
 export const key = new MnemonicKey({mnemonic: TEST_MNEMONIC});
+// const key = new MnemonicKey(); // generate random mnemonic key
+
 
 // Create a new Wallet object with the LCD client and key
 export const wallet = new Wallet(lcd, key);

@@ -22,7 +22,7 @@ const key = new MnemonicKey({
 });
 
 // Initia Chain Settings
-const initiaLCD = new LCDClient('https://next-stone-rest.initia.tech/', {
+const initiaLCD = new LCDClient('https://stone-rest.initia.tech/', {
   chainId: 'stone-8',
   gasPrices: '0.15uinit',
   gasAdjustment: '2.0',
