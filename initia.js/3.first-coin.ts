@@ -88,6 +88,9 @@ async function mintCoin(){
     }, 1000);
 }
 
-registerCoin(); // WARNING: Register Only Once! Don't call twice
-mintCoin();
+async function main(){
+    await registerCoin(); // WARNING: Register Only Once! Don't call twice
+    await mintCoin();
+}
 
+main();

@@ -200,7 +200,7 @@ async function main() {
 
     await delay(1000);
   }
-  return;
+  
   // Step 3. Reigster nft to Minitia Nft store if not exists
   registerNftToMinitia(structTag)
 

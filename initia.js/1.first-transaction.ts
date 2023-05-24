@@ -22,6 +22,7 @@ async function transferToken(){
 
     // Create a new MsgSend object with the sender and recipient addresses and the amount to send
     const sendMsg = new MsgSend(myAddr, recipientAddr, '1000uinit');
+    
     // Sign the transaction with the wallet
     const signedTx = await wallet.createAndSignTx({ msgs: [sendMsg] });
     // Broadcast the transaction to the network
@@ -34,6 +35,7 @@ async function transferToken(){
         const txResult = await lcd.tx
             .txInfo(broadcastResult.txhash)
             .catch(_ => undefined);
+
         if (txResult) {
             clearInterval(polling);
 

@@ -37,10 +37,10 @@ async function deployContract() {
             .catch((_) => undefined);
 
         if (txResult) {
-        clearInterval(polling);
+            clearInterval(polling);
 
-        // check published
-        lcd.move.module(myAddr, "basic_coin").then((res) => console.log(res));
+            // check published
+            lcd.move.module(myAddr, "basic_coin").then((res) => console.log(res));
         }
     }, 1000);
 }
