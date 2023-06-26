@@ -6,16 +6,12 @@ import {
     MsgExecute,
     MsgNftTransfer,
     Wallet,
-    sha256,
 } from '@initia/initia.js';
 import { Height } from '@initia/initia.js/dist/core/ibc/core/client/Height';
 import { delay } from 'bluebird';
-import {
-  lcd,
-  wallet,
-} from './config';
-  
-  // Wallet for tutorial
+import { structTagToIbcHash, structTagToMoveHash, pollingNftRecieve } from './utils/ibc';
+
+// Wallet for tutorial
 const key = new MnemonicKey({
   mnemonic:
     'combine ship vivid lizard foster busy mad service sister earn bubble beach receive tenant seminar dune brush surprise security wine wrong film female dinosaur',
@@ -173,6 +169,7 @@ async function main() {
   // wait for a block
   let tokenId = await pollingNftRecieve(
     initiaLCD,
+    key,
     '0x589b1e861579c3f07092859db5f8963e1dac50f1::metadata::Metadata',
     username + ':'
   );
@@ -204,7 +201,12 @@ async function main() {
   // Step 3. Reigster nft to Minitia Nft store if not exists
   registerNftToMinitia(structTag)
 
-  tokenId = await pollingNftRecieve(minitiaLCD, structTag, username + ':');
+  tokenId = await pollingNftRecieve(
+    minitiaLCD,
+    key,
+    structTag, 
+    username + ':'
+  );
   console.log(`minitia wallet recieved ${tokenId}`);
 
   // Step 4: Return nft from minitia to initia
@@ -212,6 +214,7 @@ async function main() {
 
   tokenId = await pollingNftRecieve(
     initiaLCD,
+    key,
     '0x589b1e861579c3f07092859db5f8963e1dac50f1::metadata::Metadata',
     username + ':'
   );
@@ -222,60 +225,3 @@ main().catch(e => {
   console.log(e);
   return;
 });
-
-//
-// util functions
-//
-
-function structTagToIbcHash(channelId: string, structTag: string) {
-  const fullTrace = `nft-transfer/${channelId}/${structTag}`;
-  const shaSum = sha256(Buffer.from(fullTrace));
-  const hash = Buffer.from(shaSum).toString('hex').toUpperCase();
-  return hash;
-}
-
-function structTagToMoveHash(structTag: string) {
-  const shaSum = sha256(Buffer.from(structTag));
-  const hash = Buffer.from(shaSum).toString('hex').toUpperCase();
-  return hash;
-}
-
-async function pollingNftRecieve(
-  lcd: LCDClient,
-  structTag: string,
-  tokenIdPart: string
-): Promise<string> {
-  let tokenIds = await lcd.move.viewFunction<string[]>(
-    '0x1',
-    'nft',
-    'token_ids',
-    [structTag],
-    [
-      bcs.serialize('address', key.accAddress),
-      bcs.serialize('option<string>', null),
-      bcs.serialize('u8', 30),
-    ]
-  );
-
-  let tokenId = tokenIds.find(id => id.indexOf(tokenIdPart) !== -1);
-
-  while (tokenId === undefined) {
-    tokenIds = await lcd.move.viewFunction<string[]>(
-      '0x1',
-      'nft',
-      'token_ids',
-      [structTag],
-      [
-        bcs.serialize('address', key.accAddress),
-        bcs.serialize('option<string>', null),
-        bcs.serialize('u8', 30),
-      ]
-    );
-
-    tokenId = tokenIds.find(id => id.indexOf(tokenIdPart) !== -1);
-
-    await delay(1000);
-  }
-
-  return tokenId;
-}

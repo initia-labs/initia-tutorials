@@ -1,13 +1,15 @@
 import { MsgPublish } from '@initia/initia.js';
 import { 
-    lcd,
-    wallet,
-    key
+    LCD,
+    TEST_WALLET,
+    TEST_KEY
 } from './config';
+import { pollingTx } from './utils';
 import { MoveBuilder } from '@initia/builder.js';
 import path from 'path';
 
-const myAddr = key.accAddress;
+
+const testAddr = TEST_KEY.accAddress;
 
 async function compileContract(): Promise<string> {
     // Compile contract and read the compiled module bytes
@@ -15,7 +17,6 @@ async function compileContract(): Promise<string> {
     await builder.build();
     const compiledModuleBytes = await builder.get("basic_coin");
     const base64EncodedModuleBytes = compiledModuleBytes.toString('base64');
-
     return base64EncodedModuleBytes;
 }
 
@@ -23,26 +24,17 @@ async function deployContract() {
     const base64EncodedModuleBytes = await compileContract()
 
     // Create a new message to publish the module
-    const publishMsg = new MsgPublish(myAddr, [base64EncodedModuleBytes], 1);
+    const publishMsg = new MsgPublish(testAddr, [base64EncodedModuleBytes], 1);
 
-    const signedTx = await wallet.createAndSignTx({ msgs: [publishMsg] });
-    const broadcastResult = await lcd.tx.broadcast(signedTx);
+    const signedTx = await TEST_WALLET.createAndSignTx({ msgs: [publishMsg] });
+    const broadcastResult = await LCD.tx.broadcast(signedTx);
 
     console.log("\nTX broadcasted, waiting for the result\n");
 
-    // Set up a polling interval to check for the transaction result
-    let polling = setInterval(async () => {
-        const txResult = await lcd.tx
-            .txInfo(broadcastResult.txhash)
-            .catch((_) => undefined);
-
-        if (txResult) {
-            clearInterval(polling);
-
-            // check published
-            lcd.move.module(myAddr, "basic_coin").then((res) => console.log(res));
-        }
-    }, 1000);
+    pollingTx(broadcastResult.txhash)
+    
+    // Check whether moudle is published
+    LCD.move.module(testAddr, "basic_coin").then((res) => console.log(res));
 }
   
 deployContract()

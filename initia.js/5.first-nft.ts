@@ -4,16 +4,17 @@ import {
     MsgExecute,
     BCS,
     Msg
-  } from "@initia/initia.js";
+} from "@initia/initia.js";
 import { 
-    lcd,
-    wallet,
-    key
+    LCD,
+    TEST_WALLET,
+    TEST_KEY
 } from './config';
+import { pollingTx } from './utils';
 import { MoveBuilder } from '@initia/builder.js';
 import path from 'path';
 
-const myAddr = key.accAddress;
+const testAddr = TEST_KEY.accAddress;
 const bcs = BCS.getInstance();
 
 
@@ -25,24 +26,14 @@ async function publishNftController() {
   const base64EncodedModuleBytes = compiledModuleBytes.toString('base64');
 
   // Create a new message to publish the module
-  const publishMsg = new MsgPublish(myAddr, [base64EncodedModuleBytes], 1);
+  const publishMsg = new MsgPublish(testAddr, [base64EncodedModuleBytes], 1);
 
-  const signedTx = await wallet.createAndSignTx({ msgs: [publishMsg] });
-  const broadcastResult = await lcd.tx.broadcast(signedTx);
+  const signedTx = await TEST_WALLET.createAndSignTx({ msgs: [publishMsg] });
+  const broadcastResult = await LCD.tx.broadcast(signedTx);
 
-  // polling tx, waiting for block creation
-  let polling = setInterval(async () => {
-      const txResult = await lcd.tx
-        .txInfo(broadcastResult.txhash)
-        .catch((_) => undefined);
-      
-        if (txResult) {
-        clearInterval(polling);
-  
-        // Retrieve the NFT controller module information published by the given address
-        lcd.move.module(myAddr, "nft_controller").then((res) => console.log(res));
-      }
-  }, 1000);
+  pollingTx(broadcastResult.txhash)
+  // Retrieve the NFT controller module information published by the given address
+  LCD.move.module(testAddr, "nft_controller").then((res) => console.log(res));
 
   console.log("Done for publish...\n")
 }
@@ -52,7 +43,7 @@ async function registerNft() {
 
 
   // Check if the account is registered on the DEX module
-  const isNftRegistered = await lcd.move.module(myAddr, "nft_controller");
+  const isNftRegistered = await LCD.move.module(testAddr, "nft_controller");
 
   if (isNftRegistered) {
     console.log("Nft is already registered!")
@@ -60,8 +51,8 @@ async function registerNft() {
   }
 
   const initializeMsg = new MsgExecute(
-    myAddr,
-    myAddr,
+    testAddr,
+    testAddr,
     "nft_controller",
     "initialize",
     [],
@@ -70,47 +61,39 @@ async function registerNft() {
   msgs.push(initializeMsg)
 
   const registerMsg = new MsgExecute(
-      myAddr,
+      testAddr,
       "0x1",
       "nft",
       "register",
-      [`${AccAddress.toHex(myAddr)}::nft_controller::Metadata`], // type arguments
+      [`${AccAddress.toHex(testAddr)}::nft_controller::Metadata`], // type arguments
       []
   );
 
   msgs.push(registerMsg)
 
-  const signedTx = await wallet.createAndSignTx({ msgs: msgs });
-  const broadcastResult = await lcd.tx.broadcast(signedTx);
+  const signedTx = await TEST_WALLET.createAndSignTx({ msgs: msgs });
+  const broadcastResult = await LCD.tx.broadcast(signedTx);
 
-  // polling tx, waiting for block creation
-  let polling = setInterval(async () => {
-      const txResult = await lcd.tx
-          .txInfo(broadcastResult.txhash)
-          .catch((_) => undefined);
+  pollingTx(broadcastResult.txhash)
 
-      if (txResult) {
-          clearInterval(polling);
-
-          // Check the result of the token store published in the NFT
-          lcd.move.resource(
-              myAddr,
-              `0x1::nft::TokenStore<${AccAddress.toHex(myAddr)}::nft_controller::Metadata>`)
-              .then((res) => console.log(res));
-      }
-  }, 1000);
+  // Check the result of the token store published in the NFT
+  LCD.move.resource(
+    testAddr,
+    `0x1::nft::TokenStore<${AccAddress.toHex(testAddr)}::nft_controller::Metadata>`)
+    .then((res) => console.log(res));
+  
   console.log("Done for register...\n")
 }
   
 async function mintNft(){
   const mintNftMsg = new MsgExecute(
-      myAddr,
-      myAddr,
+      testAddr,
+      testAddr,
       "nft_controller",
       "mint_to",
       [],
       [
-        bcs.serialize("address", AccAddress.toHex(myAddr)), // Recipient's address
+        bcs.serialize("address", AccAddress.toHex(testAddr)), // Recipient's address
         bcs.serialize("string", "token_id_3"), // Token ID
         bcs.serialize("string", "https://initia.co"), // Token URI
         bcs.serialize("u64", 1234), // Numeric value of the token
@@ -118,42 +101,35 @@ async function mintNft(){
       ]
     );
 
-    const signedTx = await wallet.createAndSignTx({ msgs: [mintNftMsg] });
-    const broadcastResult = await lcd.tx.broadcast(signedTx);
+    const signedTx = await TEST_WALLET.createAndSignTx({ msgs: [mintNftMsg] });
+    const broadcastResult = await LCD.tx.broadcast(signedTx);
   
-    // polling tx, waiting for block creation
-    let polling = setInterval(async () => {
-      const txResult = await lcd.tx
-        .txInfo(broadcastResult.txhash)
-        .catch((_) => undefined);
-      if (txResult) {
-        clearInterval(polling);
-  
-        // Retrieve nft information
-        const nftIds = await lcd.move.viewFunction(
-          "0x1",
-          "nft",
-          "token_ids",
-          // The name of the module and the entrypoint
-          [`${AccAddress.toHex(myAddr)}::nft_controller::Metadata`],
-          [
-            bcs.serialize("address", AccAddress.toHex(myAddr)),
-            bcs.serialize("option<string>", null),
-            bcs.serialize("u8", 10),
-          ]
-        );
+    pollingTx(broadcastResult.txhash)
 
-        // Call the "get_token_infos" entry function of the "nft" module, passing in the serialized
-        // nftIds as the input parameter.
-        lcd.move.viewFunction(
-            "0x1",
-            "nft",
-            "get_nft_infos",
-            [`${AccAddress.toHex(myAddr)}::nft_controller::Metadata`],
-            [bcs.serialize("vector<string>", nftIds)])
-          .then((res) => console.log(res));
-      }
-    }, 1000);
+    // Retrieve nft information
+    const nftIds = await LCD.move.viewFunction(
+      "0x1",
+      "nft",
+      "token_ids",
+      // The name of the module and the entrypoint
+      [`${AccAddress.toHex(testAddr)}::nft_controller::Metadata`],
+      [
+        bcs.serialize("address", AccAddress.toHex(testAddr)),
+        bcs.serialize("option<string>", null),
+        bcs.serialize("u8", 10),
+      ]
+    );
+
+    // Call the "get_token_infos" entry function of the "nft" module, passing in the serialized
+    // nftIds as the input parameter.
+    LCD.move.viewFunction(
+        "0x1",
+        "nft",
+        "get_nft_infos",
+        [`${AccAddress.toHex(testAddr)}::nft_controller::Metadata`],
+        [bcs.serialize("vector<string>", nftIds)])
+      .then((res) => console.log(res));
+    
     console.log("Done for mint...\n")
 }
 

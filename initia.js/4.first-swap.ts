@@ -1,13 +1,15 @@
 import { AccAddress, MsgExecute, MsgPublish, BCS } from '@initia/initia.js';
 import { 
-    lcd,
-    wallet,
-    key
+    LCD,
+    TEST_WALLET,
+    TEST_KEY
 } from './config';
+import { pollingTx } from './utils';
 import { MoveBuilder } from '@initia/builder.js';
 import path from 'path';
+
   
-const myAddr = key.accAddress;
+const myAddr = TEST_KEY.accAddress;
 const bcs = BCS.getInstance();
 
 const pairCoin = `${AccAddress.toHex(myAddr)}::basic_coin::Coin`;
@@ -23,39 +25,28 @@ async function publishCoins(){
     // Create a new message to publish the module
     const publishMsg = new MsgPublish(myAddr, [base64EncodedModuleBytes], 1);
 
-    const signedTx = await wallet.createAndSignTx({ msgs: [publishMsg] });
-    const broadcastResult = await lcd.tx.broadcast(signedTx);
+    const signedTx = await TEST_WALLET.createAndSignTx({ msgs: [publishMsg] });
+    const broadcastResult = await LCD.tx.broadcast(signedTx);
 
     console.log("\nTX broadcasted, waiting for the result\n");
 
-    // Set up a polling interval to check for the transaction result
-    let polling = setInterval(async () => {
-        const txResult = await lcd.tx
-            .txInfo(broadcastResult.txhash)
-            .catch((_) => undefined);
-
-        if (txResult) {
-        clearInterval(polling);
-
-        // check published
-        lcd.move.module(myAddr, "coins").then((res) => console.log(res));
-        }
-    }, 1000);
-
-    console.log("publish coins done")
+    pollingTx(broadcastResult.txhash)
+    
+    // check published
+    LCD.move.module(myAddr, "coins").then((res) => console.log(res));
 }
 
 async function swap() {
     await publishCoins();
 
-    let myBalance = await lcd.bank.balance(myAddr);
+    let myBalance = await LCD.bank.balance(myAddr);
     console.log("------------------Before Swap------------------");
     console.log("my balances:", myBalance[0].map((coin) => coin.toString()));
 
     const msgs = [];
 
     // Check if the account is registered on the DEX module
-    const isDexRegistered = await lcd.move.viewFunction(
+    const isDexRegistered = await LCD.move.viewFunction(
         "0x1",
         "dex",
         "is_account_registered",
@@ -76,7 +67,7 @@ async function swap() {
     }
 
     // Create pair if not exist
-    const isPairExist = await lcd.move.viewFunction(
+    const isPairExist = await LCD.move.viewFunction(
         "0x1",
         "dex",
         "is_listed",
@@ -145,27 +136,18 @@ async function swap() {
     //     ] // function arguments
     // );
 
-    const signedTx = await wallet.createAndSignTx({ msgs });
-    const broadcastResult = await lcd.tx.broadcast(signedTx);
+    const signedTx = await TEST_WALLET.createAndSignTx({ msgs });
+    const broadcastResult = await LCD.tx.broadcast(signedTx);
 
     console.log("\nTX broadcasted, waiting for the result\n");
 
-    // Poll the transaction to wait for block creation
-    let polling = setInterval(async () => {
-        const txResult = await lcd.tx
-            .txInfo(broadcastResult.txhash)
-            .catch((_) => undefined);
+    pollingTx(broadcastResult.txhash)
 
-        if (txResult) {
-            clearInterval(polling);
+    // Reload the balance after the swap
+    myBalance = await LCD.bank.balance(myAddr);
 
-            // Reload the balance after the swap
-            myBalance = await lcd.bank.balance(myAddr);
-
-            console.log("------------------After Swap------------------");
-            console.log("my balances: ", myBalance[0].map((coin) => coin.toString()));
-        }
-    }, 1000);
+    console.log("------------------After Swap------------------");
+    console.log("my balances: ", myBalance[0].map((coin) => coin.toString()));
 }
 
 swap()
