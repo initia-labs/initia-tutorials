@@ -1,0 +1,14 @@
+[package]
+name = "managed_coin"
+version = "0.0.0"
+
+[addresses]
+initia_std = "0x1"
+std = "0x1"
+your_address = "_"
+
+[dev-addresses]
+your_address = "0x2"
+
+[dependencies]
+InitiaStdlib = { git = "https://github.com/initia-labs/initiavm.git", subdir = "crates/../precompile/modules/initia_stdlib", rev = "main" }
