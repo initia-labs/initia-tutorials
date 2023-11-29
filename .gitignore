@@ -41,3 +41,6 @@ dist/**/*
 yarn.lock
 
 build
+
+.coverage_map.mvcov
+.trace
