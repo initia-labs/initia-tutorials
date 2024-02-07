@@ -3,11 +3,11 @@ name = "coins"
 version = "0.0.0"
 
 [dependencies]
-InitiaStdlib = { git = "https://github.com/initia-labs/initiavm.git", subdir = "crates/../precompile/modules/initia_stdlib", rev = "main" }
+InitiaStdlib = { git = "https://github.com/initia-labs/move-natives", subdir = "initia_stdlib", rev = "main" }
 
 [addresses]
 std =  "0x1"
-your_address = "0x7c2a98d9bf4d13e96e06fa4b4bdf4b9ac5c7c17b"
+your_address = "_"
 
 [dev-addresses]
 your_address = "0x2"
