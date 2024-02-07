@@ -5,10 +5,10 @@ version = "0.0.0"
 [addresses]
 initia_std = "0x1"
 std = "0x1"
-your_address = "_"
+your_address = "0x2"
 
 [dev-addresses]
 your_address = "0x2"
 
 [dependencies]
-InitiaStdlib = { git = "https://github.com/initia-labs/initiavm.git", subdir = "precompile/modules/initia_stdlib", rev = "main" }
+InitiaStdlib = { git = "https://github.com/initia-labs/move-natives", subdir = "initia_stdlib", rev = "main" }
