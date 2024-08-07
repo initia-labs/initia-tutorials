@@ -19,6 +19,8 @@ module your_address::immutable_deployer {
 
         // Disable ungated transfer
         // object can't be transfered without this transfer reference
+        //
+        // This is unnecessary because there is no way to get obj_signer without refs.
         object::disable_ungated_transfer(&transfer_ref);
 
         let obj_addr = object::address_from_constructor_ref(&constructor_ref);
