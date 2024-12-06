@@ -10,7 +10,7 @@ module your_address::immutable_deployer {
         module_names: vector<String>,
         code: vector<vector<u8>>,
     ) {
-        // this contructor reference can be created at object creation time
+        // this constructor reference can be created at object creation time
         // and can be used to create transfer reference. If we do not store
         // these references, we will not be able to transfer the object
         // without ungated transfer and we lose to get the signer of the object.
@@ -18,7 +18,7 @@ module your_address::immutable_deployer {
         let transfer_ref = object::generate_transfer_ref(&constructor_ref);
 
         // Disable ungated transfer
-        // object can't be transfered without this transfer reference
+        // object can't be transferred without this transfer reference
         //
         // This is unnecessary because there is no way to get obj_signer without refs.
         object::disable_ungated_transfer(&transfer_ref);
